@@ -62,9 +62,77 @@ class Element {
 }
 
 const request = new XMLHttpRequest();
-Arr = new Array()
-request.open('GET', 'https://api.cyberintelmatrix.com/training/feed', true);
 
+request.open('GET', 'https://api.cyberintelmatrix.com/training/feed', true);
+Arr = new Array()
+headers = ['h2', 'h3', 'h4', 'h5', 'h6']
+
+//Recursive function to draw card elements
+//elem is the current card, currentLevel goes deeper until it reaches numOfLevels and adds itself to the parentContainer.
+//Excluding the current element from the upcoming level's connections 
+function drawCards(elem, currentLevel, numOfLevels, parentContainer, excludeConnections) {
+  const card = document.createElement('div');
+  card.setAttribute('class', 'card');
+  parentContainer.appendChild(card);
+
+  //First level headers have changing texts based on if it's selected or not
+  const h = document.createElement(headers[currentLevel]);
+  if (currentLevel < 1) {
+    h.innerText = elem.getText();
+  } else {
+    h.innerText = elem.name
+  }
+  card.appendChild(h);
+
+  const content = document.createElement('div');
+  content.hidden = true
+  card.appendChild(content);
+
+  
+  
+  h.onclick = function () {
+    //Changing header text if neccesary
+    //First level header also has scroll set to it's top so it will be in full screen
+    if (currentLevel < 1) {
+      if (!elem.clicked) { card.scrollIntoView(true) }
+      elem.negateClicked()
+      h.innerText = elem.getText();
+    }
+    //Revealing deeper level connections
+    content.hidden = !content.hidden;
+  }
+  //Data of the element
+  const p = document.createElement('p');
+  p.innerText = [elem.getText(), elem.getFullData()].join('\n')
+  content.appendChild(p);
+
+  //Excluding current id from upcoming levels connection list
+  excludeConnections.push(elem.id)
+
+  //Do we need to go deeper?
+  if (currentLevel < numOfLevels) {
+    //Next level connects here
+    const connectText = document.createElement('p');
+    connectText.innerText = "Connections: "
+    content.appendChild(connectText);
+
+    elem.connections.forEach(subElemID => {
+      for (i = 0; i < Arr.length; i++) {
+        b = true;
+        //Excluding already listed connections
+        for (j = 0; j < excludeConnections.length; j++) {
+          if (Arr[i].id === excludeConnections[j]) {
+            b = false
+          }
+        }
+        if (b && (subElemID === Arr[i].id)) {
+          drawCards(Arr[i], currentLevel + 1, numOfLevels, connectText, excludeConnections)
+        }
+      }
+    });
+  }
+  return;
+}
 request.onload = function () {
   // Begin accessing JSON data here
   const data = JSON.parse(this.response).data;
@@ -92,105 +160,12 @@ request.onload = function () {
   Arr.sort((a, b) => (a.id > b.id) ? 1 : -1)
 
   //Creating output
-  Arr.forEach(elem => {
-    if (elem.type === "indicator") {
-      const card = document.createElement('div');
-      card.setAttribute('class', 'card');
-      container.appendChild(card);
-
-      const h2 = document.createElement('h2');
-      h2.innerText = elem.getText()
-      card.appendChild(h2);
-
-      const content = document.createElement('div');
-      content.setAttribute('class', 'content');
-      content.hidden = true
-      card.appendChild(content);
-
-      //Changing header text with sroll to clicked element of list
-      h2.onclick = function () {
-        if (!elem.clicked) { card.scrollIntoView(true) }
-        elem.negateClicked()
-        h2.innerText = elem.getText();
-        content.hidden = !content.hidden;
-      }
-
-      const pElem = document.createElement('p');
-      pElem.innerText = elem.getFullData()
-      content.appendChild(pElem);
-
-      //Second level connects here
-      const connectText = document.createElement('p');
-      connectText.innerText = "Connections: "
-      content.appendChild(connectText);
-
-      //Looking for second element
-      elem.connections.forEach(subElemID => {
-        const pSub = document.createElement('div');
-        pSub.setAttribute('class', 'card')
-        connectText.appendChild(pSub);
-
-        const hSub = document.createElement('h3');
-        pSub.appendChild(hSub);
-
-        const content2 = document.createElement('div');
-        content2.hidden = true
-        pSub.appendChild(content2);
-
-        const pSubText = document.createElement('p');
-        pSubText.hidden = true;
-        content2.appendChild(pSubText);
-
-        //Third level connects here
-        const connectText2 = document.createElement('p');
-        connectText2.innerText = "Connections: "
-        content2.hidden = true
-        content2.appendChild(connectText2);
-
-        //Only first layer has changing header text and scroll
-        hSub.onclick = function () {
-          pSubText.hidden = !pSubText.hidden;
-          content2.hidden = !content2.hidden;
-        }
-        //Looking for second level element texts and thrid level
-        for (i = 0; i < Arr.length; i++) {
-          if (subElemID === Arr[i].id) {
-            //Second level texts
-            hSub.innerText = "Name: " + Arr[i].name
-            pSubText.innerText = [Arr[i].getText(), Arr[i].getFullData()].join('\n')
-            //Third level
-            Arr[i].connections.forEach(subSubElemID => {
-              if (elem.id !== subSubElemID) {
-                const pSubSub = document.createElement('div');
-                pSubSub.setAttribute('class', 'card')
-                content2.appendChild(pSubSub)
-
-                const hSubSub = document.createElement('h4');
-                pSubSub.appendChild(hSubSub);
-
-                const pSubSubText = document.createElement('p');
-                pSubSubText.hidden = true;
-                pSubSub.appendChild(pSubSubText);
-
-                //Only first layer has changing header text and scroll
-                hSubSub.onclick = function () {
-                  pSubSubText.hidden = !pSubSubText.hidden;
-                }
-                //Looking for third level element texts
-                for (j = 0; j < Arr.length; j++) {
-                  if (subSubElemID === Arr[j].id) {
-                    //Third level texts without the original item (elem)
-                    hSubSub.innerText = "Name: " + Arr[j].name
-                    pSubSubText.innerText = [Arr[j].getText(), Arr[j].getFullData()].join('\n')
-                  }
-                }
-              }
-            });
-          }
-        }
-      });
-    }
+  Arr.forEach(element => {
+    const exclude = new Array()
+    //for every list item, we want to create a 3 layer deep connection list within itself
+    drawCards(element, 0, 2, container, exclude)
   });
 }
 
 request.send();
+

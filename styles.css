@@ -22,7 +22,7 @@ h1{
     padding: 1rem;
     color: #333;
 }
-h2,h3,h4 {
+h2,h3,h4,h5,h6 {
   text-align: left;
   padding: 1rem 2rem;
   background-image: linear-gradient(120deg, #ffffAE 30%, #7fE3Ec 100%);
@@ -39,6 +39,12 @@ h3 {
 
 h4 {
   font-size: 1rem;
+}
+h5 {
+  font-size: 0.9rem;
+}
+h6 {
+  font-size: 0.8rem;
 }
 
 img {
@@ -77,6 +83,6 @@ p {
   }
 }
 
-.card:nth-child(even) h2,h4{
+.card:nth-child(even) h2,h4,h6{
   background-image: linear-gradient(120deg, #7fE3Ec 0%, #ffffae 70%);
 }
